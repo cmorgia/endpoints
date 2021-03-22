@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Transit gateway Attachment processing lambda
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  TGWAttachFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/
+      Handler: tgwattach.handler
+      Runtime: python3.8
+      Environment:
+        Variables:
+          table: 'TGWAttachments'
+          tgw: 'tgw-xxxxxxxxxxxxxxxxx'
+          endpointSG: 'sg-xxxxxxxxxxxxxxxxx'
+          zones: 'Z0XXXXXXXXXXXXXXXX,Z0YYYYYYYYYYYYYYY,Z0KKKKKKKKKKKKK,Z0QQQQQQQQQQQQQ'
+          sharedVpc: 'vpc-xxxxxxxxxxxxxxxxx'
+      Policies:
+        - AWSLambdaExecute
+        - DynamoDBCrudPolicy:
+            TableName: "TGWAttachments"
+        - Version: '2012-10-17' 
+          Statement:
+            - Effect: Allow
+              Action:
+                - ec2:*
+              Resource: '*'
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /tgwattach
+            Method: get
+
+Outputs:
+  TGWAttachApi:
+    Description: "API Gateway endpoint URL for Prod stage for TGWAttach function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/tgwattach/"
+  TGWAttachFunction:
+    Description: "TGWAttach Lambda Function ARN"
+    Value: !GetAtt TGWAttachFunction.Arn
+  TGWAttachFunctionIamRole:
+    Description: "Implicit IAM Role created for TGWAttach function"
+    Value: !GetAtt TGWAttachFunctionFunctionRole.Arn
